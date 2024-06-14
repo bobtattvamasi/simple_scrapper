@@ -1,9 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
-from pydantic import BaseModel
 import psycopg2
-import pandas as pd
-
+from models import NewsArticle, NewsArticleList
 import logging
 
 
@@ -11,23 +9,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s: %(message)s'
 logger = logging.getLogger('simple_scrapper')
 logger.setLevel(logging.INFO)
 
-class NewsArticle(BaseModel):
-    title: str
-    text: str
-    date: str
-    url: str
 
-class NewsArticleList:
-    def __init__(self):
-        self.articles = []
-
-    def add_article(self, news_article):
-        self.articles.append(news_article)
-
-    def save_to_csv(self):
-        header = ['title', 'text', 'date', 'url']
-        df = pd.DataFrame(self.articles, columns=header)
-        df.to_csv("./kinopoisk_news_data.csv", sep=';', encoding='utf8')
 
 
 def scrape_website(url):
@@ -52,8 +34,9 @@ def scrape_website(url):
 
         url = anchor_tag['href']
         aria_label = anchor_tag.get('aria-label')  # Use get method for optional attribute
+        date = 'today'
 
-        news_article = NewsArticle(title=title, text=aria_label, date='today', url=url)
+        news_article = [title, aria_label, date, url] #NewsArticle(title=title, text=aria_label, date='today', url=url)
 
         print(f" New Article is: {news_article}")
 
@@ -68,7 +51,7 @@ def scrape_website(url):
         #save_to_database(news_article)
 
 def save_to_database(news_article):
-    connection = psycopg2.connect(dbname='your_database', user='your_user', password='your_password', host='your_host')
+    connection = psycopg2.connect(dbname='FaqMarketing', user='FaqMarketing', password='098', host='localhost')
     cursor = connection.cursor()
 
     cursor.execute('INSERT INTO news_articles (title, text, date, url) VALUES (%s, %s, %s, %s)',
